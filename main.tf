@@ -1,3 +1,9 @@
+provider "aws" {}
+
+provider "aws" {
+  alias = "parent"
+}
+
 locals {
   enabled                    = module.this.enabled ? 1 : 0
   parent_zone_record_enabled = var.parent_zone_record_enabled && module.this.enabled ? 1 : 0
@@ -6,6 +12,8 @@ locals {
 data "aws_region" "default" {}
 
 data "aws_route53_zone" "parent_zone" {
+  provider = aws.parent
+
   count   = local.parent_zone_record_enabled
   zone_id = var.parent_zone_id
   name    = var.parent_zone_name
@@ -34,6 +42,8 @@ resource "aws_route53_zone" "default" {
 }
 
 resource "aws_route53_record" "ns" {
+  provider = aws.parent
+
   count   = local.parent_zone_record_enabled
   zone_id = join("", data.aws_route53_zone.parent_zone.*.zone_id)
   name    = join("", aws_route53_zone.default.*.name)
